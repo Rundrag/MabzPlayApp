@@ -5,16 +5,14 @@ plugins {
 
 android {
     namespace 'com.mabzplay.player'
-    compileSdk 34
+    compileSdk 33
 
     defaultConfig {
         applicationId "com.mabzplay.player"
         minSdk 21
-        targetSdk 34
+        targetSdk 33
         versionCode 2
         versionName "1.1"
-
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
@@ -35,12 +33,12 @@ android {
 }
 
 dependencies {
-    implementation 'androidx.core:core-ktx:1.12.0'
+    implementation 'androidx.core:core-ktx:1.9.0'
     implementation 'androidx.appcompat:appcompat:1.6.1'
-    implementation 'com.google.android.material:material:1.11.0'
+    implementation 'com.google.android.material:material:1.8.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
-    implementation 'androidx.webkit:webkit:1.10.0'
+    implementation 'androidx.webkit:webkit:1.6.0'
     
-    // Professional ad-blocking engine - based on Brave's ad-block library
-    implementation 'com.github.Edsuns.AdblockAndroid:ad-filter:1.0'
+    // Working version from the repository
+    implementation 'com.github.Edsuns.AdblockAndroid:ad-filter:0.9.1'
 }
