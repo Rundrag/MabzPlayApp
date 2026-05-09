@@ -12,7 +12,7 @@
     
     <!-- Neon green ring -->
     <path
-        android:fillColor="none"
+        android:fillColor="@android:color/transparent"
         android:strokeColor="#39ff14"
         android:strokeWidth="12"
         android:pathData="M256,256m-240,0a240,240 0,1 1,480 0a240,240 0,1 1,-480 0" />
