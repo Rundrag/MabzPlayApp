@@ -38,7 +38,8 @@
         android:paddingEnd="16dp"
         android:paddingTop="8dp"
         android:paddingBottom="8dp"
-        android:gravity="center">
+        android:gravity="center"
+        android:visibility="visible">
 
         <View
             android:layout_width="8dp"
@@ -50,7 +51,7 @@
             android:id="@+id/adBlockerText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="uBlock Active"
+            android:text="uBlock Origin"
             android:textColor="#39ff14"
             android:textSize="12sp"
             android:fontFamily="monospace" />
