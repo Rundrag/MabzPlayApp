@@ -1,12 +1,9 @@
 <resources>
     <style name="Theme.MabzPlay" parent="Theme.MaterialComponents.DayNight.NoActionBar">
-        <item name="colorPrimary">@color/background_dark</item>
-        <item name="colorPrimaryVariant">@color/background_card</item>
-        <item name="colorOnPrimary">@color/text_primary</item>
-        <item name="colorSecondary">@color/neon_green</item>
-        <item name="colorSecondaryVariant">@color/neon_green_dark</item>
-        <item name="colorOnSecondary">@color/background_dark</item>
-        <item name="android:statusBarColor">@color/background_dark</item>
-        <item name="android:navigationBarColor">@color/background_dark</item>
+        <item name="colorPrimary">#0a0c10</item>
+        <item name="colorPrimaryVariant">#12141c</item>
+        <item name="colorOnPrimary">#eef2ff</item>
+        <item name="android:statusBarColor">#0a0c10</item>
+        <item name="android:navigationBarColor">#0a0c10</item>
     </style>
 </resources>
