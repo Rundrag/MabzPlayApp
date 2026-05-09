@@ -28,22 +28,13 @@ class MainActivity : AppCompatActivity() {
     
     private var adsBlockedCount = 0
     private var loadError = false
+    private var retryCount = 0
     
-    // Comprehensive ad patterns
     private val adPatterns = listOf(
         "doubleclick.net", "googleadservices.com", "googlesyndication.com",
         "google-analytics.com", "adservice.google", "pagead2.googlesyndication.com",
-        "partner.googleadservices.com", "tpc.googlesyndication.com", "googleads.g.doubleclick.net",
-        "ad.doubleclick.net", "static.doubleclick.net",
-        "adbrite.com", "exponential.com", "quantserve.com", "scorecardresearch.com",
-        "zedo.com", "adsafeprotected.com", "teads.tv", "outbrain.com", 
-        "taboola.com", "criteo.com", "pubmatic.com", "openx.com",
-        "rubiconproject.com", "appnexus.com", "adnxs.com", "adroll.com",
         "popads.net", "popcash.net", "propellerads.com", "adsterra.com",
-        "popunderjs.com", "popunders.com",
-        "vidsrc.xyz/ads", "vidsrc.xyz/popup", "vidsrc.xyz/redirect",
-        "embed.su/ads", "2embed.cc/ads", "vidsrc.net/ads",
-        "vidsrc.pm/ads", "vsembed.ru/ads"
+        "vidsrc.xyz/ads", "vidsrc.xyz/popup", "embed.su/ads", "2embed.cc/ads"
     )
     
     @SuppressLint("SetJavaScriptEnabled")
@@ -59,6 +50,10 @@ class MainActivity : AppCompatActivity() {
         
         setupWebView()
         setupAdBlocker()
+        
+        // Show a message that loading has started
+        Toast.makeText(this, "Loading Mabz Play...", Toast.LENGTH_SHORT).show()
+        
         loadWebsite()
         
         mainHandler.postDelayed({
@@ -80,12 +75,13 @@ class MainActivity : AppCompatActivity() {
                 mediaPlaybackRequiresUserGesture = false
                 allowFileAccess = true
                 allowContentAccess = true
-                cacheMode = android.webkit.WebSettings.LOAD_DEFAULT
+                cacheMode = android.webkit.WebSettings.LOAD_NO_CACHE
                 setSupportMultipleWindows(false)
                 javaScriptCanOpenWindowsAutomatically = false
                 loadsImagesAutomatically = true
                 blockNetworkImage = false
                 blockNetworkLoads = false
+                mixedContentMode = android.webkit.WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
                 userAgentString = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
             }
             
@@ -118,11 +114,21 @@ class MainActivity : AppCompatActivity() {
     }
     
     private fun loadWebsite() {
-        // Clear any previous errors
         loadError = false
-        // Load the website
-        webView.loadUrl("https://mabzplay.vercel.app")
-        // Also try with www if the main URL fails (handled in WebViewClient)
+        // Try multiple URLs in case one is down
+        val urls = listOf(
+            "https://mabzplay.vercel.app",
+            "https://mabzplay.netlify.app",
+            "https://mabzplay.vercel.app/"
+        )
+        
+        val urlToLoad = if (retryCount < urls.size) urls[retryCount] else urls[0]
+        webView.loadUrl(urlToLoad)
+    }
+    
+    private fun retryLoad() {
+        retryCount++
+        loadWebsite()
     }
     
     private fun updateAdCounter() {
@@ -140,14 +146,23 @@ class MainActivity : AppCompatActivity() {
             super.onPageStarted(view, url, favicon)
             progressBar.visibility = View.VISIBLE
             loadError = false
+            // Log the URL being loaded
+            android.util.Log.d("MabzPlay", "Loading URL: $url")
         }
         
         override fun onPageFinished(view: WebView?, url: String?) {
             super.onPageFinished(view, url)
             progressBar.visibility = View.GONE
             
-            if (!loadError) {
+            if (!loadError && url != null && url.isNotEmpty()) {
                 injectAdBlockingScript()
+                // Show success message
+                Toast.makeText(this@MainActivity, "Loaded: ${view?.title}", Toast.LENGTH_SHORT).show()
+            } else if (loadError) {
+                Toast.makeText(this@MainActivity, "Failed to load, retrying...", Toast.LENGTH_SHORT).show()
+                mainHandler.postDelayed({
+                    retryLoad()
+                }, 2000)
             }
         }
         
@@ -161,15 +176,23 @@ class MainActivity : AppCompatActivity() {
             loadError = true
             progressBar.visibility = View.GONE
             
-            // Show error message to user
-            Toast.makeText(this@MainActivity, "Failed to load: $description", Toast.LENGTH_SHORT).show()
+            val errorMsg = "Error $errorCode: $description"
+            android.util.Log.e("MabzPlay", errorMsg)
+            Toast.makeText(this@MainActivity, errorMsg, Toast.LENGTH_LONG).show()
             
-            // Try alternative URL if main fails
-            if (failingUrl?.contains("mabzplay.vercel.app") == true) {
-                mainHandler.postDelayed({
-                    webView.loadUrl("https://mabzplay.netlify.app")
-                }, 2000)
-            }
+            // Show a visible error message in WebView
+            val errorHtml = """
+                <html>
+                <body style="background:#0a0c10; color:#eef2ff; text-align:center; padding:40px;">
+                    <h2 style="color:#39ff14;">Mabz Play</h2>
+                    <p>Failed to load website.</p>
+                    <p style="color:#e50914;">$description</p>
+                    <p>Check your internet connection and try again.</p>
+                    <button onclick="location.reload()" style="background:#39ff14; border:none; padding:10px 20px; border-radius:5px;">Retry</button>
+                </body>
+                </html>
+            """.trimIndent()
+            view?.loadDataWithBaseURL(null, errorHtml, "text/html", "UTF-8", null)
         }
         
         override fun shouldInterceptRequest(
@@ -198,22 +221,12 @@ class MainActivity : AppCompatActivity() {
         ): Boolean {
             val url = request?.url.toString()
             
-            // Allow navigation within the website
-            if (url.contains("mabzplay.vercel.app") || 
-                url.contains("mabzplay.netlify.app") ||
-                url.contains("vidsrc") ||
-                url.contains("tmdb")) {
-                view?.loadUrl(url)
-                return true
-            }
-            
-            // Block external URLs that might be ads
+            // Allow any URL that's not obviously an ad
             if (url.contains("popup") || url.contains("doubleclick") || url.contains("googlead")) {
                 updateAdCounter()
                 return true
             }
             
-            // For everything else, load normally
             view?.loadUrl(url)
             return true
         }
@@ -221,35 +234,21 @@ class MainActivity : AppCompatActivity() {
         private fun injectAdBlockingScript() {
             val jsCode = """
                 javascript:(function() {
-                    // Hide ad elements
                     var style = document.createElement('style');
                     style.innerHTML = `
-                        [class*="ad-" i],[class*="_ad" i],[id*="ad-" i],[id*="_ad" i],
-                        [class*="banner" i],[id*="banner" i],[class*="popup" i],[id*="popup" i],
-                        [class*="modal" i],[class*="overlay" i],[class*="sponsor" i],
-                        [class*="promo" i],[class*="offer" i],[data-ad],
-                        iframe[src*="doubleclick"],iframe[src*="googlead"],
+                        [class*="ad-"],[class*="_ad"],[id*="ad-"],[id*="_ad"],
+                        [class*="banner"],[id*="banner"],[class*="popup"],[id*="popup"],
+                        [class*="modal"],[class*="overlay"],[class*="sponsor"],
                         .video-ads, .vjs-ad-iframe, .ad-container,
-                        div[style*="z-index: 999"] {
+                        iframe[src*="doubleclick"],iframe[src*="googlead"] {
                             display: none !important;
                             visibility: hidden !important;
                             height: 0 !important;
-                            overflow: hidden !important;
                         }
                     `;
                     document.head.appendChild(style);
-                    
-                    // Block popups
                     window.open = function() { return null; };
-                    
-                    // Clear intervals
-                    var highestTimeoutId = setTimeout(function(){}, 0);
-                    for (var i = 0; i < highestTimeoutId; i++) {
-                        clearTimeout(i);
-                        clearInterval(i);
-                    }
-                    
-                    console.log('Ad blocker injected successfully');
+                    console.log('Ad blocker injected');
                 })();
             """.trimIndent()
             
@@ -263,15 +262,5 @@ class MainActivity : AppCompatActivity() {
         } else {
             super.onBackPressed()
         }
-    }
-    
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        webView.saveState(outState)
-    }
-    
-    override fun onRestoreInstanceState(savedInstanceState: Bundle) {
-        super.onRestoreInstanceState(savedInstanceState)
-        webView.restoreState(savedInstanceState)
     }
 }
