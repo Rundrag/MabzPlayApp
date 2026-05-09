@@ -1,13 +1,12 @@
 buildscript {
-    ext.kotlin_version = '1.9.0'
     repositories {
         google()
         mavenCentral()
-        maven { url 'https://jitpack.io' }  // Add this for AdblockAndroid
+        maven { url 'https://jitpack.io' }
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:7.4.2'
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.0"
     }
 }
 
@@ -15,10 +14,6 @@ allprojects {
     repositories {
         google()
         mavenCentral()
-        maven { url 'https://jitpack.io' }  // Add this
+        maven { url 'https://jitpack.io' }
     }
-}
-
-task clean(type: Delete) {
-    delete rootProject.buildDir
 }
