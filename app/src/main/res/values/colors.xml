@@ -1,10 +1,6 @@
-<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="background_dark">#0a0c10</color>
-    <color name="background_card">#12141c</color>
     <color name="neon_green">#39ff14</color>
-    <color name="neon_green_dark">#2ecc71</color>
     <color name="accent_red">#e50914</color>
     <color name="text_primary">#eef2ff</color>
-    <color name="text_secondary">#8b92b0</color>
 </resources>
