@@ -117,9 +117,9 @@ class MainActivity : AppCompatActivity() {
         loadError = false
         // Try multiple URLs in case one is down
         val urls = listOf(
-            "https://mabzplay.vercel.app",
+            "https://mabz.vercel.app",
             "https://mabzplay.netlify.app",
-            "https://mabzplay.vercel.app/"
+            "https://mabz.vercel.app/"
         )
         
         val urlToLoad = if (retryCount < urls.size) urls[retryCount] else urls[0]
