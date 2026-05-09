@@ -1,0 +1,6 @@
+<resources>
+    <string name="app_name">Mabz Play</string>
+    <string name="loading">Loading...</string>
+    <string name="ad_blocker_active">Ad Blocker Active</string>
+    <string name="enter_url">Enter URL</string>
+</resources>
