@@ -2,6 +2,8 @@ package com.mabzplay.player
 
 import android.annotation.SuppressLint
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
@@ -10,9 +12,6 @@ import android.webkit.WebViewClient
 import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import java.io.ByteArrayInputStream
 
 class MainActivity : AppCompatActivity() {
@@ -22,6 +21,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var adBlockerIndicator: android.widget.LinearLayout
     private lateinit var adBlockerText: TextView
     private lateinit var adCounter: TextView
+    private val mainHandler = Handler(Looper.getMainLooper())
     
     private var adsBlockedCount = 0
     
@@ -66,10 +66,9 @@ class MainActivity : AppCompatActivity() {
         loadWebsite()
         
         // Auto-hide ad blocker indicator after 3 seconds
-        lifecycleScope.launch {
-            delay(3000)
+        mainHandler.postDelayed({
             adBlockerIndicator.animate().alpha(0.5f).duration = 1000
-        }
+        }, 3000)
     }
     
     @SuppressLint("SetJavaScriptEnabled")
@@ -120,10 +119,9 @@ class MainActivity : AppCompatActivity() {
         
         // Make indicator visible
         adBlockerIndicator.animate().alpha(1f).duration = 200
-        lifecycleScope.launch {
-            delay(2000)
+        mainHandler.postDelayed({
             adBlockerIndicator.animate().alpha(0.5f).duration = 1000
-        }
+        }, 2000)
     }
     
     inner class AdBlockingWebViewClient : WebViewClient() {
