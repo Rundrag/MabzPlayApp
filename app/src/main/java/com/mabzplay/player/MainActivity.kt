@@ -157,7 +157,7 @@ class MainActivity : AppCompatActivity() {
     }
     
     private fun loadWebsite() {
-        webView.loadUrl("https://mabzplay.vercel.app")
+        webView.loadUrl("https://mabz.vercel.app")
     }
     
     private fun updateAdCounter() {
