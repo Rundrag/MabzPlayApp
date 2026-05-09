@@ -1,10 +1,12 @@
 package com.mabzplay.player
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.graphics.Bitmap
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.view.KeyEvent
 import android.view.View
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
@@ -27,14 +29,18 @@ class MainActivity : AppCompatActivity() {
     private val mainHandler = Handler(Looper.getMainLooper())
     
     private var adsBlockedCount = 0
-    private var loadError = false
-    private var retryCount = 0
     
+    // Comprehensive ad patterns including popup triggers
     private val adPatterns = listOf(
         "doubleclick.net", "googleadservices.com", "googlesyndication.com",
         "google-analytics.com", "adservice.google", "pagead2.googlesyndication.com",
         "popads.net", "popcash.net", "propellerads.com", "adsterra.com",
-        "vidsrc.xyz/ads", "vidsrc.xyz/popup", "embed.su/ads", "2embed.cc/ads"
+        "popunderjs.com", "popunders.com", "popup", "popunder", "pop-up",
+        "vidsrc.xyz/ads", "vidsrc.xyz/popup", "embed.su/ads", "2embed.cc/ads",
+        "openload", "streamtape", "mp4upload", "rapidvideo", "vidoza",
+        "adf.ly", "linkbucks.com", "shorte.st", "bc.vc", "adfoc.us",
+        "exe.io", "earnify.com", "linkvertise.com", "sub2unlock.com",
+        "lootdest.com", "dailyuploads.net", "up-to-down.net"
     )
     
     @SuppressLint("SetJavaScriptEnabled")
@@ -50,10 +56,6 @@ class MainActivity : AppCompatActivity() {
         
         setupWebView()
         setupAdBlocker()
-        
-        // Show a message that loading has started
-        Toast.makeText(this, "Loading Mabz Play...", Toast.LENGTH_SHORT).show()
-        
         loadWebsite()
         
         mainHandler.postDelayed({
@@ -75,7 +77,8 @@ class MainActivity : AppCompatActivity() {
                 mediaPlaybackRequiresUserGesture = false
                 allowFileAccess = true
                 allowContentAccess = true
-                cacheMode = android.webkit.WebSettings.LOAD_NO_CACHE
+                cacheMode = android.webkit.WebSettings.LOAD_DEFAULT
+                // CRITICAL: Disable multiple windows to prevent popups
                 setSupportMultipleWindows(false)
                 javaScriptCanOpenWindowsAutomatically = false
                 loadsImagesAutomatically = true
@@ -85,24 +88,8 @@ class MainActivity : AppCompatActivity() {
                 userAgentString = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
             }
             
-            webViewClient = AdBlockingWebViewClient()
-            webChromeClient = object : WebChromeClient() {
-                override fun onProgressChanged(view: WebView?, newProgress: Int) {
-                    if (newProgress < 100) {
-                        progressBar.progress = newProgress
-                        progressBar.visibility = View.VISIBLE
-                    } else {
-                        progressBar.visibility = View.GONE
-                    }
-                }
-                
-                override fun onReceivedTitle(view: WebView?, title: String?) {
-                    super.onReceivedTitle(view, title)
-                    if (title?.isNotEmpty() == true && !title.startsWith("about:blank")) {
-                        supportActionBar?.title = title
-                    }
-                }
-            }
+            webViewClient = PopupBlockingWebViewClient()
+            webChromeClient = PopupBlockingWebChromeClient()
             
             setLayerType(View.LAYER_TYPE_HARDWARE, null)
         }
@@ -114,21 +101,7 @@ class MainActivity : AppCompatActivity() {
     }
     
     private fun loadWebsite() {
-        loadError = false
-        // Try multiple URLs in case one is down
-        val urls = listOf(
-            "https://mabz.vercel.app",
-            "https://mabzplay.netlify.app",
-            "https://mabz.vercel.app/"
-        )
-        
-        val urlToLoad = if (retryCount < urls.size) urls[retryCount] else urls[0]
-        webView.loadUrl(urlToLoad)
-    }
-    
-    private fun retryLoad() {
-        retryCount++
-        loadWebsite()
+        webView.loadUrl("https://mabz.vercel.app")
     }
     
     private fun updateAdCounter() {
@@ -140,30 +113,35 @@ class MainActivity : AppCompatActivity() {
         }, 2000)
     }
     
-    inner class AdBlockingWebViewClient : WebViewClient() {
+    // This blocks JavaScript window.open() calls and new window creation
+    inner class PopupBlockingWebChromeClient : WebChromeClient() {
+        override fun onCreateWindow(
+            view: WebView?,
+            isDialog: Boolean,
+            isUserGesture: Boolean,
+            resultMsg: android.os.Message?
+        ): Boolean {
+            // CRITICAL: This prevents new windows/tabs from opening
+            // Return true to block the popup, false would allow it
+            updateAdCounter()
+            Toast.makeText(this@MainActivity, "Popup blocked", Toast.LENGTH_SHORT).show()
+            // If we need to handle the popup, we would create a new WebView
+            // But since we want to block it completely, just return true
+            return true
+        }
+    }
+    
+    inner class PopupBlockingWebViewClient : WebViewClient() {
         
         override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
             super.onPageStarted(view, url, favicon)
             progressBar.visibility = View.VISIBLE
-            loadError = false
-            // Log the URL being loaded
-            android.util.Log.d("MabzPlay", "Loading URL: $url")
         }
         
         override fun onPageFinished(view: WebView?, url: String?) {
             super.onPageFinished(view, url)
             progressBar.visibility = View.GONE
-            
-            if (!loadError && url != null && url.isNotEmpty()) {
-                injectAdBlockingScript()
-                // Show success message
-                Toast.makeText(this@MainActivity, "Loaded: ${view?.title}", Toast.LENGTH_SHORT).show()
-            } else if (loadError) {
-                Toast.makeText(this@MainActivity, "Failed to load, retrying...", Toast.LENGTH_SHORT).show()
-                mainHandler.postDelayed({
-                    retryLoad()
-                }, 2000)
-            }
+            injectAdBlockingScript()
         }
         
         override fun onReceivedError(
@@ -173,26 +151,7 @@ class MainActivity : AppCompatActivity() {
             failingUrl: String?
         ) {
             super.onReceivedError(view, errorCode, description, failingUrl)
-            loadError = true
             progressBar.visibility = View.GONE
-            
-            val errorMsg = "Error $errorCode: $description"
-            android.util.Log.e("MabzPlay", errorMsg)
-            Toast.makeText(this@MainActivity, errorMsg, Toast.LENGTH_LONG).show()
-            
-            // Show a visible error message in WebView
-            val errorHtml = """
-                <html>
-                <body style="background:#0a0c10; color:#eef2ff; text-align:center; padding:40px;">
-                    <h2 style="color:#39ff14;">Mabz Play</h2>
-                    <p>Failed to load website.</p>
-                    <p style="color:#e50914;">$description</p>
-                    <p>Check your internet connection and try again.</p>
-                    <button onclick="location.reload()" style="background:#39ff14; border:none; padding:10px 20px; border-radius:5px;">Retry</button>
-                </body>
-                </html>
-            """.trimIndent()
-            view?.loadDataWithBaseURL(null, errorHtml, "text/html", "UTF-8", null)
         }
         
         override fun shouldInterceptRequest(
@@ -215,45 +174,115 @@ class MainActivity : AppCompatActivity() {
             return super.shouldInterceptRequest(view, request)
         }
         
+        // CRITICAL: This blocks new navigation attempts that try to load separate pages
         override fun shouldOverrideUrlLoading(
             view: WebView?,
             request: WebResourceRequest?
         ): Boolean {
-            val url = request?.url.toString()
+            val url = request?.url.toString().lowercase()
             
-            // Allow any URL that's not obviously an ad
-            if (url.contains("popup") || url.contains("doubleclick") || url.contains("googlead")) {
-                updateAdCounter()
-                return true
+            // Allow the main site and video sources
+            if (url.contains("mabz.vercel.app") ||
+                url.contains("vidsrc") ||
+                url.contains("m3u8") ||
+                url.contains(".mp4") ||
+                url.contains("tmdb.org")) {
+                return false // Let WebView load it normally
             }
             
+            // Block common popup/ad domains
+            val blockedDomains = listOf(
+                "popup", "popunder", "doubleclick", "googlead", "googlesyndication",
+                "adservice", "adsterra", "popads", "propellerads", "exoclick", "adf.ly",
+                "linkbucks", "shorte.st", "bc.vc", "adfoc.us", "exe.io", "earnify.com",
+                "linkvertise", "sub2unlock", "lootdest", "dailyuploads", "vidoza",
+                "streamtape", "mp4upload", "rapidvideo", "openload"
+            )
+            
+            for (domain in blockedDomains) {
+                if (url.contains(domain)) {
+                    updateAdCounter()
+                    Toast.makeText(this@MainActivity, "Popup URL blocked", Toast.LENGTH_SHORT).show()
+                    return true // Block the URL
+                }
+            }
+            
+            // For any other external URL, load it but in the same WebView
+            // (This prevents new tabs from opening)
             view?.loadUrl(url)
             return true
         }
         
         private fun injectAdBlockingScript() {
+            // This JavaScript runs on every page to block popup triggers
             val jsCode = """
                 javascript:(function() {
+                    // Store original window.open
+                    var originalWindowOpen = window.open;
+                    
+                    // Override window.open to do nothing
+                    window.open = function() {
+                        console.log('Popup blocked by Mabz Play');
+                        return null;
+                    };
+                    
+                    // Override window.location.replace for ad redirects
+                    var originalLocationReplace = window.location.replace;
+                    window.location.replace = function(url) {
+                        if (url && (url.includes('popup') || url.includes('ad') || url.includes('doubleclick'))) {
+                            console.log('Redirect blocked:', url);
+                            return;
+                        }
+                        return originalLocationReplace.call(this, url);
+                    };
+                    
+                    // Prevent popup from anchor tags with target="_blank"
+                    document.querySelectorAll('a[target="_blank"]').forEach(function(el) {
+                        el.setAttribute('target', '_self');
+                    });
+                    
+                    // Remove event listeners that might open popups
+                    var buttons = document.querySelectorAll('button, div, span, a');
+                    buttons.forEach(function(el) {
+                        if (el.getAttribute('onclick') && 
+                            (el.getAttribute('onclick').includes('window.open') ||
+                             el.getAttribute('onclick').includes('popup'))) {
+                            el.removeAttribute('onclick');
+                        }
+                    });
+                    
+                    // Hide ad elements
                     var style = document.createElement('style');
                     style.innerHTML = `
                         [class*="ad-"],[class*="_ad"],[id*="ad-"],[id*="_ad"],
                         [class*="banner"],[id*="banner"],[class*="popup"],[id*="popup"],
                         [class*="modal"],[class*="overlay"],[class*="sponsor"],
-                        .video-ads, .vjs-ad-iframe, .ad-container,
-                        iframe[src*="doubleclick"],iframe[src*="googlead"] {
+                        iframe[src*="doubleclick"],iframe[src*="googlead"],
+                        .video-ads, .vjs-ad-iframe, .ad-container {
                             display: none !important;
                             visibility: hidden !important;
                             height: 0 !important;
+                            width: 0 !important;
+                            overflow: hidden !important;
                         }
                     `;
                     document.head.appendChild(style);
-                    window.open = function() { return null; };
-                    console.log('Ad blocker injected');
+                    
+                    console.log('Mabz Play popup blocker active');
                 })();
             """.trimIndent()
             
             webView.evaluateJavascript(jsCode, null)
         }
+    }
+    
+    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        // Handle back button to navigate within WebView history
+        if (keyCode == KeyEvent.KEYCODE_BACK && webView.canGoBack()) {
+            webView.goBack()
+            return true
+        }
+        return super.onKeyDown(keyCode, event)
     }
     
     override fun onBackPressed() {
