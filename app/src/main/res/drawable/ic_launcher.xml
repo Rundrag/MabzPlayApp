@@ -7,24 +7,19 @@
     
     <!-- Background circle -->
     <path
-        android:fillColor="@color/background_dark"
+        android:fillColor="#0a0c10"
         android:pathData="M256,256m-256,0a256,256 0,1 1,512 0a256,256 0,1 1,-512 0" />
     
     <!-- Neon green ring -->
     <path
         android:fillColor="none"
-        android:strokeColor="@color/neon_green"
+        android:strokeColor="#39ff14"
         android:strokeWidth="12"
         android:pathData="M256,256m-240,0a240,240 0,1 1,480 0a240,240 0,1 1,-480 0" />
     
-    <!-- Play button triangle -->
+    <!-- Play button -->
     <path
-        android:fillColor="@color/neon_green"
+        android:fillColor="#39ff14"
         android:pathData="M210,180 L210,332 L330,256 Z" />
-    
-    <!-- Letter "M" -->
-    <path
-        android:fillColor="@android:color/white"
-        android:pathData="M280,200 L232,200 L232,320 L280,320 L280,200 Z" />
     
 </vector>
