@@ -38,7 +38,4 @@ dependencies {
     implementation 'com.google.android.material:material:1.8.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation 'androidx.webkit:webkit:1.6.0'
-    
-    // Working version from the repository
-    implementation 'com.github.Edsuns.AdblockAndroid:ad-filter:0.9.1'
 }
