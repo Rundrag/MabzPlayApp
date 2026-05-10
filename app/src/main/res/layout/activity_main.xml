@@ -14,63 +14,9 @@
         android:progressTint="#39ff14"
         android:visibility="gone" />
 
-    <FrameLayout
+    <WebView
+        android:id="@+id/webView"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1">
-
-        <WebView
-            android:id="@+id/webView"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" />
-
-    </FrameLayout>
-
-    <LinearLayout
-        android:id="@+id/adBlockerIndicator"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="end"
-        android:layout_margin="16dp"
-        android:background="#80000000"
-        android:orientation="horizontal"
-        android:paddingStart="8dp"
-        android:paddingEnd="16dp"
-        android:paddingTop="8dp"
-        android:paddingBottom="8dp"
-        android:gravity="center"
-        android:visibility="visible">
-
-        <View
-            android:layout_width="8dp"
-            android:layout_height="8dp"
-            android:background="#39ff14"
-            android:layout_marginEnd="8dp" />
-
-        <TextView
-            android:id="@+id/adBlockerText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="uBlock Origin"
-            android:textColor="#39ff14"
-            android:textSize="12sp"
-            android:fontFamily="monospace" />
-
-        <TextView
-            android:id="@+id/adCounter"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:background="#e50914"
-            android:text="0"
-            android:textColor="#ffffff"
-            android:textSize="10sp"
-            android:paddingStart="6dp"
-            android:paddingEnd="6dp"
-            android:paddingTop="2dp"
-            android:paddingBottom="2dp"
-            android:gravity="center" />
-
-    </LinearLayout>
+        android:layout_height="match_parent" />
 
 </LinearLayout>
